@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'chats',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +51,8 @@ MIDDLEWARE = [
     "DEFAULT_AUTHENTICATION_CLASSES",
     "rest_framework.authentication.SessionAuthentication"
 ]
+
+AUTH_USER_MODEL = 'chats.CustomUser'
 
 ROOT_URLCONF = 'messaging_app.urls'
 
