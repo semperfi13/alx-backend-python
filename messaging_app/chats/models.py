@@ -9,26 +9,20 @@ class User(AbstractUser):
         ('host', 'Host'),
         ('admin', 'Admin'),
     ]
-
-    user_id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False,
-        db_index=True
-    )
     first_name = models.CharField(max_length=255, null=False)
     last_name = models.CharField(max_length=255, null=False)
-    email = models.EmailField(max_length=255, null=False, unique=True)
-    password_hash = models.CharField(max_length=255, null=False)
-    phone_number = models.CharField(max_length=255, null=True)
+    phone_number = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    role = models.CharField(max_length=7, choices=ROLE_CHOICES)
+    role = models.CharField(max_length=7, choices=ROLE_CHOICES, default='guest')
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
     def __str__(self):
-        return f"User ID {self.user_id} - First Name {self.first_name}"
+        return f"User {self.email} - {self.first_name} {self.last_name}"
+
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}".strip()
 
 
 class Conversation(models.Model):
@@ -38,9 +32,10 @@ class Conversation(models.Model):
         editable=False,
         db_index=True
     )
-    participants_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="conversations")
-
+    participants_id = models.ManyToManyField(User, related_name="conversations")
+    subject = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Conversation {self.conversation_id} - User {self.participants_id.email}"
@@ -53,10 +48,13 @@ class Message(models.Model):
         editable=False,
         db_index=True
     )
-    send_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="sent_messages")
+    sender_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_messages")
     conversation_id = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
     message_body = models.TextField(null=False)
     sent_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['sent_at']
+
     def __str__(self):
-        return f"Message from {self.send_id.email} at {self.sent_at}"
+        return f"Message from {self.sender_id.email} at {self.sent_at}"
